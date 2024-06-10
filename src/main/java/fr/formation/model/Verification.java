@@ -25,7 +25,6 @@ public class Verification {
 	@Column(name="mot_de_passe")
 	private String motDePasse;
 	
-	@Transient
 	private int forceMotDePasse;
 	
 	@Enumerated(EnumType.STRING)
@@ -74,7 +73,13 @@ public class Verification {
 		this.utilisateurId = utilisateurId;
 	}
 
-	
+	public int getForceMotDePasse() {
+		return forceMotDePasse;
+	}
+
+	public void setForceMotDePasse(int forceMotDePasse) {
+		this.forceMotDePasse = forceMotDePasse;
+	}
 	
 	
 }

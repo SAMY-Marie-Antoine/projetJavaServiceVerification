@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import fr.formation.enumerator.VerificationEtat;
 import fr.formation.feignclient.PrincipalFeignClient;
 import fr.formation.model.Verification;
 import fr.formation.repo.VerificationRepository;
@@ -75,7 +76,7 @@ public class VerificationApiController {
 
 
 	@GetMapping("/mot-de-passe/vulnerable/{motDePasse}")
-	public String getMotDePasseVulnerableById(@Valid @PathVariable String motDePasse) {
+	public VerificationEtat getMotDePasseVulnerableById(@Valid @PathVariable String motDePasse) {
 
 		log.info("Exécution de la méthode findByEmail avec l'email: " + motDePasse);		
 
@@ -84,7 +85,7 @@ public class VerificationApiController {
 		if (optVerification.isPresent() && optVerification.get().getMotDePasse().length() >= motDePasse.length()) {
 
 			log.info("La méthode findByEmail a été exécutée avec succès");
-			return this.principalFeignClient.getMotDePasseVulnerableById(optVerification.get().getMotDePasse());
+			return this.principalFeignClient.getMotDePasseVulnerableById(optVerification.get().getEtat());
 
 		}
 
@@ -93,7 +94,7 @@ public class VerificationApiController {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
 		}
 		log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
-		return "- Le mot de passe est incohérent -";
+		return VerificationEtat.ATTENTE;
 	}
 
 	
@@ -107,7 +108,7 @@ public class VerificationApiController {
 		if (optVerification.isPresent() && optVerification.get().getMotDePasse().length() >= motDePasse.length()) {
 
 			log.info("La méthode findByEmail a été exécutée avec succès");
-			return this.principalFeignClient.getForceMotDePasse(optVerification.get().getMotDePasse());
+			return this.principalFeignClient.getForceMotDePasse(optVerification.get().getForceMotDePasse());
 
 		}
 

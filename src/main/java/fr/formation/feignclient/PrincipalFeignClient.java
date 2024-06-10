@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import fr.formation.enumerator.VerificationEtat;
+
 // @FeignClient(value = "commentaire-service", url = "http://localhost:8082", path = "/api/commentaire")
 // @FeignClient(value = "commentaire-service", path = "/api/commentaire")
 @FeignClient(value = "projetJavaServicePrincipal", path = "/api/principal", fallback = PrincipalFeignClient.Fallback.class)
@@ -18,10 +20,10 @@ public interface PrincipalFeignClient {
     public String getMotDePasseByEmail(@PathVariable String email);
     
     @GetMapping("/mot-de-passe/vulnerable/{motDePasse}")
-    String getMotDePasseVulnerableById(@PathVariable("motDePasse") String motDePasse);
+    VerificationEtat getMotDePasseVulnerableById(@PathVariable("motDePasse") VerificationEtat verificationEtat);
 
-    @GetMapping("/mot-de-passe/force")
-    int getForceMotDePasse(@RequestParam("motDePasse") String motDePasse);
+    @GetMapping("/mot-de-passe/force/{motDePasse}")
+    int getForceMotDePasse(@PathVariable("motDePasse") int i);
     
     @Component
     public static class Fallback implements PrincipalFeignClient {
@@ -38,16 +40,17 @@ public interface PrincipalFeignClient {
 			return email;
 		}
 
+	
 		@Override
-		public String getMotDePasseVulnerableById(String motDePasse) {
+		public VerificationEtat getMotDePasseVulnerableById(VerificationEtat verificationEtat) {
 			// TODO Auto-generated method stub
-			return motDePasse;
+			return verificationEtat;
 		}
 
 		@Override
-		public int getForceMotDePasse(String motDePasse) {
+		public int getForceMotDePasse(int i) {
 			// TODO Auto-generated method stub
-			return 0;
+			return i;
 		}
     }
 }
