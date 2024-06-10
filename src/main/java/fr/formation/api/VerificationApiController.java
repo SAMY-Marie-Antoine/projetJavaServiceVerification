@@ -1,26 +1,27 @@
 package fr.formation.api;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
-import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
-import fr.formation.command.CreateVerificationCommand;
-import fr.formation.enumerator.CommentaireEtat;
-import fr.formation.enumerator.VerificationEtat;
-import fr.formation.model.Commentaire;
+import fr.formation.feignclient.PrincipalFeignClient;
 import fr.formation.model.Verification;
 import fr.formation.repo.VerificationRepository;
 import fr.formation.request.VerificationRequest;
@@ -31,94 +32,145 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/verification")
 @CrossOrigin("*")
 public class VerificationApiController {
-    @Autowired
-    private VerificationRepository repository;
 
-    @Autowired
-    private RestTemplate restTemplate;
+	private static final Logger log = LoggerFactory.getLogger(VerificationApiController.class);
+	
+	//@Autowired
+	private final VerificationRepository verificationRepository;
 
-    @Autowired
-    private CircuitBreakerFactory circuitBreakerFactory;
+	@Autowired
+	private PrincipalFeignClient principalFeignClient;
 
-    @Autowired
-    private StreamBridge streamBridge;
+	public VerificationApiController(VerificationRepository verificationRepository) {
+		this.verificationRepository = verificationRepository;
+		log.info("Initialisation de VerificationApiController");
+	}
+	
+	
+	@GetMapping
+	public List<VerificationResponse> findAll() {
 
-    @GetMapping
-    public List<VerificationResponse> findAll() {
-        return this.repository.findAllByEtat(VerificationEtat.OK).stream()
-            // .map(commentaire -> this.map(commentaire))
-            .map(this::map)
-            .toList();
-    }
+		log.info("Exécution de la méthode findAll");
 
-    
-    @GetMapping("/{utilisateurId}")
-    public String getNoteByProduitId(@Valid @PathVariable String utilisateurId) {
-        // Calcul de la note moyenne - V1
-        List<Verification> verifications = this.repository.findAllByUtilisateurIdAndEtat(utilisateurId, VerificationEtat.OK);
-        String resultat ;
-        
-               resultat = this.repository.findAllByUtilisateurtId(utilisateurId).toString();
-           
-        
-        return resultat;
-    }
-    
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public String create(@RequestBody VerificationRequest request) {
-        // Boolean isNotable = this.restTemplate
-        //     .getForObject("http://localhost:8081/api/produit/" + request.getProduitId() + "/is-notable", Boolean.class);
-        // Boolean isNotable = this.restTemplate
-        //     .getForObject("lb://produit-service/api/produit/" + request.getProduitId() + "/is-notable", Boolean.class);
-        
-        // Boolean isNotable = this.circuitBreakerFactory.create("produitService").run(
-        //     () -> this.restTemplate
-        //                 .getForObject("lb://produit-service/api/produit/" + request.getProduitId() + "/is-notable", Boolean.class)
-        //     ,
-        //     ex -> false
-        // );
+		List<Verification> verifications = this.verificationRepository.findAll();
+		List<VerificationResponse> response = new ArrayList<>();
 
-        // if (isNotable == null || !isNotable) {
-        //     // Pas la peine d'aller plus loin
-        //     throw new ProduitNotFoundOrNotNotableException();
-        // }
+		for (Verification verification : verifications) {
+			VerificationResponse verificationResponse = new VerificationResponse();
 
-        Verification verification = new Verification();
-        CreateVerificationCommand command = new CreateVerificationCommand();
+			BeanUtils.copyProperties(verification, verificationResponse);
 
-        BeanUtils.copyProperties(request, verification);
+			response.add(verificationResponse);
 
-        verification.setEtat(VerificationEtat.ATTENTE);
+			String mdp = this.principalFeignClient.getMotDePasseById(verification.getMotDePasse());
 
-        this.repository.save(verification);
+			if (mdp != null) {
+				verificationResponse.setMotDePasse(mdp);
+			}
+		}
 
-        command.setVerificationId(verification.getId());
-        command.setUtilisateurId(verification.getId());
+		log.info("La méthode findAll a été exécutée avec succès");
+		return response;
+	}
 
-        this.streamBridge.send("verification.created", command);
 
-        return verification.getId();
-    }
+	@GetMapping("/{motDePasse}")
+	public String getMotDePasseVulnerableById(@Valid @PathVariable String motDePasse) {
 
-    private VerificationResponse map(Verification verification) {
-        VerificationResponse response = new VerificationResponse();
+		log.info("Exécution de la méthode findByEmail avec l'email: " + motDePasse);		
 
-        BeanUtils.copyProperties(verification, response);
+		Optional<Verification> optVerification = Optional.of(this.verificationRepository.findByMotDePasse(motDePasse));
 
-        // String name = this.restTemplate
-        //     .getForObject("http://localhost:8081/api/produit/" + commentaire.getProduitId() + "/name", String.class);
-        // String name = this.restTemplate
-        //     .getForObject("lb://produit-service/api/produit/" + commentaire.getProduitId() + "/name", String.class);
+		if (optVerification.isPresent() && optVerification.get().getMotDePasse().length() >= motDePasse.length()) {
 
-        String name = this.circuitBreakerFactory.create("UtilisateurService").run(
-            () -> this.restTemplate.getForObject("lb://projetJavaServicePrincipal/api/utilisateur/" + verification.getId() + "/name", String.class)
-            ,
-            t -> "- no name -"
-        );
+			log.info("La méthode findByEmail a été exécutée avec succès");
+			return this.principalFeignClient.getMotDePasseVulnerableById(optVerification.get().getMotDePasse());
 
-        response.setId(name);
+		}
 
-        return response;
-    }
+		if(optVerification.get().getMotDePasse().length() > motDePasse.length() ) {
+			log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
+		}
+		log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
+		return "- Le mot de passe est incohérent -";
+	}
+
+	
+	@GetMapping("/{motDePasse}")
+	public int getForceMotDePasse(@Valid @PathVariable String motDePasse) {
+
+		log.info("Exécution de la méthode findByEmail avec l'email: " + motDePasse);		
+
+		Optional<Verification> optVerification = Optional.of(this.verificationRepository.findByMotDePasse(motDePasse));
+
+		if (optVerification.isPresent() && optVerification.get().getMotDePasse().length() >= motDePasse.length()) {
+
+			log.info("La méthode findByEmail a été exécutée avec succès");
+			return this.principalFeignClient.getForceMotDePasse(optVerification.get().getMotDePasse());
+
+		}
+
+		if(optVerification.get().getMotDePasse().length() > motDePasse.length() ) {
+			log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
+			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
+		}
+		log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
+		return 0;
+	}
+	
+	
+	
+	@GetMapping("/{id}")
+	public String findById(@Valid @PathVariable("id") String id) {
+
+		log.info("Exécution de la méthode findByEmail avec l'Id: " + id);		
+
+		Optional<Verification> optVerification = this.verificationRepository.findById(id);
+
+		if (optVerification.isPresent()) {
+
+			log.info("La méthode findById a été exécutée avec succès");
+			return this.principalFeignClient.getMotDePasseById(optVerification.get().getMotDePasse());
+
+		}
+
+		log.warn("Utilisateur non trouvé dans la méthode findByEmail avec l'id: " + id);
+		return "- Utilisateur non trouvé -";
+	}
+
+	@PutMapping("/{id}")
+	@ResponseStatus(HttpStatus.CREATED)
+	public String update(@Valid @PathVariable("id") String id,@RequestBody VerificationResponse request) {
+
+		log.info("Exécution de la méthode update avec l'id: " + id);
+
+		Verification verificationbdd=this.verificationRepository.findById(id).get();
+		Verification verification = new Verification();
+		BeanUtils.copyProperties(request, verificationbdd);
+
+		this.verificationRepository.save(verificationbdd);
+
+		log.info("La méthode update a été exécutée avec succès");
+		return verification.getId();
+	}
+
+	@DeleteMapping("/{id}")
+	@ResponseStatus(HttpStatus.CREATED)
+	public String delete(@Valid @PathVariable("id") String id,@RequestBody VerificationRequest request) {
+
+		log.info("Exécution de la méthode delete avec l'id: " + id);
+
+		Optional<Verification> verificationbdd=this.verificationRepository.findById(id);
+		Verification verification = new Verification();
+		BeanUtils.copyProperties(request, verificationbdd);
+
+		this.verificationRepository.deleteById(id);
+
+		log.info("La méthode delete a été exécutée avec succès");
+		return verification.getId();
+	}
+
+
+
 }

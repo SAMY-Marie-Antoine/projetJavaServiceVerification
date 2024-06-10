@@ -27,6 +27,7 @@ public class Verification {
 	 private VerificationEtat etat;
 	
 	private String utilisateurId;
+	
 
 	public String getId() {
 		return id;
