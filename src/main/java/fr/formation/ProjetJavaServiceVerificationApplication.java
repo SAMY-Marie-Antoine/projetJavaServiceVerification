@@ -10,7 +10,6 @@ import org.springframework.web.client.RestTemplate;
 
 @SpringBootApplication
 @EnableFeignClients // Activer les clients Feign
-
 public class ProjetJavaServiceVerificationApplication {
 
 	public static void main(String[] args) {

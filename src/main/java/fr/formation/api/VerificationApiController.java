@@ -74,7 +74,7 @@ public class VerificationApiController {
 	}
 
 
-	@GetMapping("/{motDePasse}")
+	@GetMapping("/mot-de-passe/vulnerable/{motDePasse}")
 	public String getMotDePasseVulnerableById(@Valid @PathVariable String motDePasse) {
 
 		log.info("Exécution de la méthode findByEmail avec l'email: " + motDePasse);		
@@ -88,7 +88,7 @@ public class VerificationApiController {
 
 		}
 
-		if(optVerification.get().getMotDePasse().length() > motDePasse.length() ) {
+		if(optVerification.isPresent() && optVerification.get().getMotDePasse().length() > motDePasse.length() ) {
 			log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
 		}
@@ -97,8 +97,8 @@ public class VerificationApiController {
 	}
 
 	
-	@GetMapping("/{motDePasse}")
-	public int getForceMotDePasse(@Valid @PathVariable String motDePasse) {
+	@GetMapping("/mot-de-passe/force/{motDePasse}")
+	public int getForceMotDePasse(@Valid @PathVariable("motDePasse") String motDePasse) {
 
 		log.info("Exécution de la méthode findByEmail avec l'email: " + motDePasse);		
 

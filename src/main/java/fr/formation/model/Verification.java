@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "verification")
 public class Verification {
+	
 	@Id
 	@UuidGenerator
 	private String id;
@@ -24,7 +25,7 @@ public class Verification {
 	private String motDePasse;
 	
 	@Enumerated(EnumType.STRING)
-	 private VerificationEtat etat;
+	private VerificationEtat etat;
 	
 	private String utilisateurId;
 	
