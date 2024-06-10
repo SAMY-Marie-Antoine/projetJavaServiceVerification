@@ -5,7 +5,11 @@ public class VerificationRequest {
 	private String emailVerif;
 	
 	private String motDePasseVerif;
+	
+	private int forceMotDePasse;
+	
 
+	
 	public String getEmailVerif() {
 		return emailVerif;
 	}
@@ -22,6 +26,13 @@ public class VerificationRequest {
 		this.motDePasseVerif = motDePasseVerif;
 	}
 	
-	
+	public int getForceMotDePasse() {
+		return forceMotDePasse;
+	}
+
+	public void setForceMotDePasse(int forceMotDePasse) {
+		this.forceMotDePasse = forceMotDePasse;
+	}
+
 	
 }

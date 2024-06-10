@@ -9,6 +9,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "verification")
@@ -23,6 +24,9 @@ public class Verification {
 
 	@Column(name="mot_de_passe")
 	private String motDePasse;
+	
+	@Transient
+	private int forceMotDePasse;
 	
 	@Enumerated(EnumType.STRING)
 	private VerificationEtat etat;
