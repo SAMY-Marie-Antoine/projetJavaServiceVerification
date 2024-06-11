@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import fr.formation.enumerator.VerificationEtat;
 import fr.formation.model.Verification;
-import fr.formation.repo.VerificationRepository;
+import fr.formation.repository.VerificationRepository;
 
 @Component("onVerificationValidated")
 public class VerificationValidatedEventConsumer implements Consumer<String> {

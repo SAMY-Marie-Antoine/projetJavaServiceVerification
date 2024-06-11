@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import fr.formation.repo.VerificationRepository;
+import fr.formation.repository.VerificationRepository;
 
 @Component("onVerificationRejected")
 public class VerificationRejectedEventConsumer implements Consumer<String> {
