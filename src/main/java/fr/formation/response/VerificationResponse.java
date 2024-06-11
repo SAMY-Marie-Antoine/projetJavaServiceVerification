@@ -3,47 +3,39 @@ package fr.formation.response;
 public class VerificationResponse {
 
 	private String id;
-	private String emailVerif;
-	private String motDePasseVerif;
-	private int forceMotDePasse;
-
-
+	private String email;
+	private String motDePasse;
+	private boolean forceMotDePasse;
+	private boolean motDePasseCompromis;
+	
+	public boolean isMotDePasseCompromis() {
+		return motDePasseCompromis;
+	}
+	public void setMotDePasseCompromis(boolean motDePasseCompromis) {
+		this.motDePasseCompromis = motDePasseCompromis;
+	}
 	public String getId() {
 		return id;
 	}
 	public void setId(String id) {
 		this.id = id;
 	}
-
 	public String getEmail() {
-		return emailVerif;
+		return email;
 	}
-	public void setEmail(String emailVerif) {
-		this.emailVerif = emailVerif;
+	public void setEmail(String email) {
+		this.email = email;
 	}
 	public String getMotDePasse() {
-		return motDePasseVerif;
+		return motDePasse;
 	}
-	public void setMotDePasse(String motDePasseVerif) {
-		this.motDePasseVerif = motDePasseVerif;
+	public void setMotDePasse(String motDePasse) {
+		this.motDePasse = motDePasse;
 	}
-
-	public String getEmailVerif() {
-		return emailVerif;
-	}
-	public void setEmailVerif(String emailVerif) {
-		this.emailVerif = emailVerif;
-	}
-	public String getMotDePasseVerif() {
-		return motDePasseVerif;
-	}
-	public void setMotDePasseVerif(String motDePasseVerif) {
-		this.motDePasseVerif = motDePasseVerif;
-	}
-	public int getForceMotDePasse() {
+	public boolean isForceMotDePasse() {
 		return forceMotDePasse;
 	}
-	public void setForceMotDePasse(int forceMotDePasse) {
+	public void setForceMotDePasse(boolean forceMotDePasse) {
 		this.forceMotDePasse = forceMotDePasse;
 	}
 

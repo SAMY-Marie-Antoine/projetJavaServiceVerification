@@ -19,13 +19,15 @@ public class Verification {
 	@UuidGenerator
 	private String id;
 
-	@Column(name="emailverif")
-	private String emailVerif;
+	@Column(name="email")
+	private String email;
 
 	@Column(name="mot_de_passe")
 	private String motDePasse;
 	
-	private int forceMotDePasse;
+	private boolean forceMotDePasse;
+	
+	private boolean motDePasseCompromis;
 	
 	@Enumerated(EnumType.STRING)
 	private VerificationEtat etat;
@@ -42,11 +44,11 @@ public class Verification {
 	}
 
 	public String getEmailVerif() {
-		return emailVerif;
+		return email;
 	}
 
 	public void setEmailVerif(String emailVerif) {
-		this.emailVerif = emailVerif;
+		this.email = emailVerif;
 	}
 
 	public String getMotDePasse() {
@@ -73,13 +75,20 @@ public class Verification {
 		this.utilisateurId = utilisateurId;
 	}
 
-	public int getForceMotDePasse() {
+	public boolean isForceMotDePasse() {
 		return forceMotDePasse;
 	}
 
-	public void setForceMotDePasse(int forceMotDePasse) {
+	public void setForceMotDePasse(boolean forceMotDePasse) {
 		this.forceMotDePasse = forceMotDePasse;
 	}
-	
+
+	public boolean isMotDePasseCompromis() {
+		return motDePasseCompromis;
+	}
+
+	public void setMotDePasseCompromis(boolean motDePasseCompromis) {
+		this.motDePasseCompromis = motDePasseCompromis;
+	}
 	
 }

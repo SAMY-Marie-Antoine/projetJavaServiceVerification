@@ -2,30 +2,36 @@ package fr.formation.request;
 
 public class VerificationRequest {
 
-	private String emailVerif;
-	
-	private String motDePasseVerif;
-	
+	private String email;
+	private String motDePasse;
 	private int forceMotDePasse;
+	private boolean motDePasseCompromis;
 	
 
-	
-	public String getEmailVerif() {
-		return emailVerif;
+	public boolean isMotDePasseCompromis() {
+		return motDePasseCompromis;
 	}
 
-	public void setEmailVerif(String emailVerif) {
-		this.emailVerif = emailVerif;
+	public void setMotDePasseCompromis(boolean motDePasseCompromis) {
+		this.motDePasseCompromis = motDePasseCompromis;
 	}
 
-	public String getMotDePasseVerif() {
-		return motDePasseVerif;
+	public String getEmail() {
+		return email;
 	}
 
-	public void setMotDePasseVerif(String motDePasseVerif) {
-		this.motDePasseVerif = motDePasseVerif;
+	public void setEmail(String email) {
+		this.email = email;
 	}
-	
+
+	public String getMotDePasse() {
+		return motDePasse;
+	}
+
+	public void setMotDePasse(String motDePasse) {
+		this.motDePasse = motDePasse;
+	}
+
 	public int getForceMotDePasse() {
 		return forceMotDePasse;
 	}
@@ -33,6 +39,9 @@ public class VerificationRequest {
 	public void setForceMotDePasse(int forceMotDePasse) {
 		this.forceMotDePasse = forceMotDePasse;
 	}
+	
 
+	
+	
 	
 }

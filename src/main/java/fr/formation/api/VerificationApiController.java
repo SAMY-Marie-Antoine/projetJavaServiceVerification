@@ -9,10 +9,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import fr.formation.enumerator.VerificationEtat;
 import fr.formation.feignclient.PrincipalFeignClient;
 import fr.formation.model.Verification;
-import fr.formation.repo.VerificationRepository;
+import fr.formation.repository.VerificationRepository;
 import fr.formation.request.VerificationRequest;
 import fr.formation.response.VerificationResponse;
 import jakarta.validation.Valid;
@@ -35,115 +37,76 @@ import jakarta.validation.Valid;
 public class VerificationApiController {
 
 	private static final Logger log = LoggerFactory.getLogger(VerificationApiController.class);
-	
+
 	//@Autowired
 	private final VerificationRepository verificationRepository;
 
-	@Autowired
-	private PrincipalFeignClient principalFeignClient;
+
 
 	public VerificationApiController(VerificationRepository verificationRepository) {
 		this.verificationRepository = verificationRepository;
 		log.info("Initialisation de VerificationApiController");
 	}
-	
-	
-	@GetMapping
-	public List<VerificationResponse> findAll() {
 
-		log.info("Exécution de la méthode findAll");
 
-		List<Verification> verifications = this.verificationRepository.findAll();
-		List<VerificationResponse> response = new ArrayList<>();
 
-		for (Verification verification : verifications) {
-			VerificationResponse verificationResponse = new VerificationResponse();
+	//Vérification de la force d'un mot de passe
 
-			BeanUtils.copyProperties(verification, verificationResponse);
+	@PostMapping("/mot-de-passe/force/{motDePasse}")
+	private boolean getForceMotDePasse(@Valid @PathVariable("motDePasse") String motDePasse) {
 
-			response.add(verificationResponse);
-
-			String mdp = this.principalFeignClient.getMotDePasseById(verification.getMotDePasse());
-
-			if (mdp != null) {
-				verificationResponse.setMotDePasse(mdp);
-			}
-		}
-
-		log.info("La méthode findAll a été exécutée avec succès");
-		return response;
+		log.info("Vérification de la force du mot de passe.");
+		boolean isStrong = isForceMotDePasse(motDePasse);
+		log.info("Résultat de la vérification de la force du mot de passe : {}", isStrong);
+		return isStrong;
 	}
 
 
-	@GetMapping("/mot-de-passe/vulnerable/{motDePasse}")
-    public VerificationEtat getMotDePasseVulnerableById(@Valid @PathVariable String motDePasse) {
-
-        log.info("Exécution de la méthode getMotDePasseVulnerableById pour le mot de passe: {}", motDePasse);
-
-        Optional<Verification> optVerification = Optional.of(this.verificationRepository.findByMotDePasse(motDePasse));
-
-        if (optVerification.isPresent() && optVerification.get().getMotDePasse().length() >= motDePasse.length()) {
-
-            log.info("Le mot de passe a été trouvé dans la méthode getMotDePasseVulnerableById");
-            //return this.principalFeignClient.getMotDePasseVulnerableById(optVerification.get().getEtat());
-            return VerificationEtat.OK;
-
-        }
-
-        if(optVerification.isPresent() && optVerification.get().getMotDePasse().length() < motDePasse.length() ) {
-            log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
-            //throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
-            //return this.principalFeignClient.getMotDePasseVulnerableById(optVerification.get().getEtat().ECHEC);
-            return VerificationEtat.ECHEC;
-        }
-        log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
-        return VerificationEtat.ECHEC;
-    }
-
-	
-	@GetMapping("/mot-de-passe/force/{motDePasse}")
-    public boolean getForceMotDePasse(@Valid @PathVariable("motDePasse") String motDePasse) {
-
-        log.info("Exécution de la méthode getForceMotDePasse pour le mot de passe: {}", motDePasse);
-
-        Verification optVerification = this.verificationRepository.findByMotDePasse(motDePasse);
-
-        if ( motDePasse.length()>3) {
-
-            log.info("Le mot de passe a été trouvé dans la méthode getForceMotDePasse");
-            //return this.principalFeignClient.getForceMotDePasse(optVerification.getForceMotDePasse());
-            return true;
-
-        }
-
-        if(optVerification.getForceMotDePasse() > motDePasse.length() ) {
-            log.warn("Mode passe non trouvé dans la méthode getForceMotDePasse avec l'id: " + motDePasse);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
-        }
-        log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
-        return false;
-    }
-	
-	
-	
-	@GetMapping("/{id}")
-	public String findById(@Valid @PathVariable("id") String id) {
-
-		log.info("Exécution de la méthode findByEmail avec l'Id: " + id);		
-
-		Optional<Verification> optVerification = this.verificationRepository.findById(id);
-
-		if (optVerification.isPresent()) {
-
-			log.info("La méthode findById a été exécutée avec succès");
-			return this.principalFeignClient.getMotDePasseById(optVerification.get().getMotDePasse());
-
-		}
-
-		log.warn("Utilisateur non trouvé dans la méthode findByEmail avec l'id: " + id);
-		return "- Utilisateur non trouvé -";
+	// Méthode pour vérifier si un mot de passe est fort
+	private boolean isForceMotDePasse(String motDePasse) {
+		// Exemple de vérification de la force du mot de passe
+		return motDePasse.length() > 8 && motDePasse.matches(".*\\d.*") && motDePasse.matches(".*[a-z].*") && motDePasse.matches(".*[A-Z].*");
 	}
 
+	//Vérification mot de passe compromis
+
+	@PostMapping("/mot-de-passe/vulnerable/{motDePasse}")
+	private boolean  getMotDePasseVulnerable(@Valid @PathVariable String motDePasse) {
+
+		log.info("Exécution de la méthode getMotDePasseVulnerableById pour le mot de passe: {}", motDePasse);
+
+		log.info("Vérification si le mot de passe est compromis.");
+		boolean isCompromis = isPasswordCompromis(motDePasse);
+		log.info("Résultat de la vérification du mot de passe compromis : {}", isCompromis);
+		return isCompromis;
+
+	}
+
+
+	// Méthode pour vérifier si un mot de passe est compromis
+	private boolean isPasswordCompromis(String motDePasse) {
+		// Exemple de vérification contre une liste de mots de passe compromis
+		// Ici, il faudrait comparer avec les mots de passe hachés en SHA-1 stockés dans les fichiers TXT
+		return false; // À implémenter
+	}
+
+
+	// Génération d'un mot de passe fort
+	@GetMapping("/generateMotDePasseFort")
+	public String generateMotDePasseFort() {
+		log.info("Génération d'un mot de passe fort.");
+		String motDePasseFort = generateStrongPassword();
+		log.info("Mot de passe fort généré : {}", motDePasseFort);
+		return motDePasseFort;
+	}
+
+	// Méthode pour générer un mot de passe fort
+	private String generateStrongPassword() {
+	// Exemple de génération de mot de passe fort
+	return new BCryptPasswordEncoder().encode("StrongP@ssw0rd!");
+	}
+	
+	
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.CREATED)
 	public String update(@Valid @PathVariable("id") String id,@RequestBody VerificationResponse request) {
@@ -168,6 +131,12 @@ public class VerificationApiController {
 
 		Optional<Verification> verificationbdd=this.verificationRepository.findById(id);
 		Verification verification = new Verification();
+
+		if (verificationbdd.isEmpty()) {
+			log.error("verification non trouvée avec l'id : {}", id);
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Id verification inexistant");
+		}
+
 		BeanUtils.copyProperties(request, verificationbdd);
 
 		this.verificationRepository.deleteById(id);
