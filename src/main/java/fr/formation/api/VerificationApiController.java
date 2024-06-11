@@ -76,49 +76,53 @@ public class VerificationApiController {
 
 
 	@GetMapping("/mot-de-passe/vulnerable/{motDePasse}")
-	public VerificationEtat getMotDePasseVulnerableById(@Valid @PathVariable String motDePasse) {
+    public VerificationEtat getMotDePasseVulnerableById(@Valid @PathVariable String motDePasse) {
 
-		log.info("Exécution de la méthode findByEmail avec l'email: " + motDePasse);		
+        log.info("Exécution de la méthode getMotDePasseVulnerableById pour le mot de passe: {}", motDePasse);
 
-		Optional<Verification> optVerification = Optional.of(this.verificationRepository.findByMotDePasse(motDePasse));
+        Optional<Verification> optVerification = Optional.of(this.verificationRepository.findByMotDePasse(motDePasse));
 
-		if (optVerification.isPresent() && optVerification.get().getMotDePasse().length() >= motDePasse.length()) {
+        if (optVerification.isPresent() && optVerification.get().getMotDePasse().length() >= motDePasse.length()) {
 
-			log.info("La méthode findByEmail a été exécutée avec succès");
-			return this.principalFeignClient.getMotDePasseVulnerableById(optVerification.get().getEtat());
+            log.info("Le mot de passe a été trouvé dans la méthode getMotDePasseVulnerableById");
+            //return this.principalFeignClient.getMotDePasseVulnerableById(optVerification.get().getEtat());
+            return VerificationEtat.OK;
 
-		}
+        }
 
-		if(optVerification.isPresent() && optVerification.get().getMotDePasse().length() > motDePasse.length() ) {
-			log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
-		}
-		log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
-		return VerificationEtat.ATTENTE;
-	}
+        if(optVerification.isPresent() && optVerification.get().getMotDePasse().length() < motDePasse.length() ) {
+            log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
+            //throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
+            //return this.principalFeignClient.getMotDePasseVulnerableById(optVerification.get().getEtat().ECHEC);
+            return VerificationEtat.ECHEC;
+        }
+        log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
+        return VerificationEtat.ECHEC;
+    }
 
 	
 	@GetMapping("/mot-de-passe/force/{motDePasse}")
-	public int getForceMotDePasse(@Valid @PathVariable("motDePasse") String motDePasse) {
+    public boolean getForceMotDePasse(@Valid @PathVariable("motDePasse") String motDePasse) {
 
-		log.info("Exécution de la méthode findByEmail avec l'email: " + motDePasse);		
+        log.info("Exécution de la méthode getForceMotDePasse pour le mot de passe: {}", motDePasse);
 
-		Optional<Verification> optVerification = Optional.of(this.verificationRepository.findByMotDePasse(motDePasse));
+        Verification optVerification = this.verificationRepository.findByMotDePasse(motDePasse);
 
-		if (optVerification.isPresent() && optVerification.get().getMotDePasse().length() >= motDePasse.length()) {
+        if ( motDePasse.length()>3) {
 
-			log.info("La méthode findByEmail a été exécutée avec succès");
-			return this.principalFeignClient.getForceMotDePasse(optVerification.get().getForceMotDePasse());
+            log.info("Le mot de passe a été trouvé dans la méthode getForceMotDePasse");
+            //return this.principalFeignClient.getForceMotDePasse(optVerification.getForceMotDePasse());
+            return true;
 
-		}
+        }
 
-		if(optVerification.get().getMotDePasse().length() > motDePasse.length() ) {
-			log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
-			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
-		}
-		log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
-		return 0;
-	}
+        if(optVerification.getForceMotDePasse() > motDePasse.length() ) {
+            log.warn("Mode passe non trouvé dans la méthode getForceMotDePasse avec l'id: " + motDePasse);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe est vulnérable");
+        }
+        log.warn("Mode passe non trouvé dans la méthode findByEmail avec l'id: " + motDePasse);
+        return false;
+    }
 	
 	
 	

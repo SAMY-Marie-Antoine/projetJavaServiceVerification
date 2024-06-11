@@ -23,7 +23,7 @@ public interface PrincipalFeignClient {
     VerificationEtat getMotDePasseVulnerableById(@PathVariable("motDePasse") VerificationEtat verificationEtat);
 
     @GetMapping("/mot-de-passe/force/{motDePasse}")
-    int getForceMotDePasse(@PathVariable("motDePasse") int i);
+    boolean getForceMotDePasse(@PathVariable("motDePasse") int i);
     
     @Component
     public static class Fallback implements PrincipalFeignClient {
@@ -48,9 +48,9 @@ public interface PrincipalFeignClient {
 		}
 
 		@Override
-		public int getForceMotDePasse(int i) {
+		public boolean getForceMotDePasse(int i) {
 			// TODO Auto-generated method stub
-			return i;
+			return true;
 		}
     }
 }
