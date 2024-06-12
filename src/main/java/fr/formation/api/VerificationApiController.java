@@ -1,7 +1,13 @@
 package fr.formation.api;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,7 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.clickhouse.client.internal.grpc.internal.SharedResourceHolder.Resource;
+
 import fr.formation.repository.VerificationRepository;
+import fr.formation.service.HashingService;
 import jakarta.validation.Valid;
 
 @RestController
@@ -23,12 +32,14 @@ public class VerificationApiController {
 	//@Autowired
 	private final VerificationRepository verificationRepository;
 
+	private final HashingService hashingService;
 
 
-	public VerificationApiController(VerificationRepository verificationRepository) {
-		this.verificationRepository = verificationRepository;
-		log.info("Initialisation de VerificationApiController");
-	}
+	public VerificationApiController(VerificationRepository verificationRepository, HashingService hashingService) {
+        this.verificationRepository = verificationRepository;
+        this.hashingService = hashingService;
+        log.info("Initialisation de VerificationApiController");
+    }
 
 
 	// Génération d'un mot de passe fort
@@ -85,7 +96,24 @@ public class VerificationApiController {
 		// le mot de passe claire doit etre convertir en SHA-1 pour être comparé aux fichiers
 		// Ici, il faudrait comparer avec les mots de passe hachés en SHA-1 stockés dans les fichiers TXT
 		//return false; // À implémenter
-		return true;// à tester le retour du SHA : true veut dire que le mdp est compromis
+
+		String hashedPassword = hashingService.hashWithSHA1(motDePasse);
+        log.info("Mot de passe haché en SHA-1 : {}", hashedPassword);
+
+        Resource resource = new ClassPathResource("path/to/*.txt");
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().equals(hashedPassword)) {
+
+					//return true;// à tester le retour du SHA : true veut dire que le mdp est compromis
+                    return true;
+                }
+            }
+        }
+        return false;
+		
 	}
 
 }
