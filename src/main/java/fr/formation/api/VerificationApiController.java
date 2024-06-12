@@ -48,7 +48,6 @@ public class VerificationApiController {
 		
 
 	//Vérification de la force d'un mot de passe
-
 	@PostMapping("/mot-de-passe/force")
 	private boolean getForceMotDePasse(@Valid @RequestBody String motDePasse) {
 
@@ -66,7 +65,6 @@ public class VerificationApiController {
 	}
 
 	//Vérification mot de passe compromis
-
 	@PostMapping("/mot-de-passe/compromis")
 	private boolean  getMotDePasseCompromis(@Valid @RequestBody String motDePasse) {
 
@@ -75,6 +73,7 @@ public class VerificationApiController {
 		log.info("Vérification si le mot de passe est compromis.");
 		boolean isCompromis = isPasswordCompromis(motDePasse);
 		log.info("Résultat de la vérification du mot de passe compromis : {}", isCompromis);
+		
 		return isCompromis;
 
 	}
@@ -83,9 +82,10 @@ public class VerificationApiController {
 	// Méthode pour vérifier si un mot de passe est compromis
 	private boolean isPasswordCompromis(String motDePasse) {
 		// Exemple de vérification contre une liste de mots de passe compromis
+		// le mot de passe claire doit etre convertir en SHA-1 pour être comparé aux fichiers
 		// Ici, il faudrait comparer avec les mots de passe hachés en SHA-1 stockés dans les fichiers TXT
 		//return false; // À implémenter
-		return true;// à tester le retour du SHA
+		return true;// à tester le retour du SHA : true veut dire que le mdp est compromis
 	}
 
 }

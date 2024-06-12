@@ -22,7 +22,7 @@ public class Verification {
 	@Column(name="email")
 	private String email;
 
-	@Column(name="mot_de_passe")
+	@Column(name="mot_de_passe", length = 512)
 	private String motDePasse;
 	
 	private boolean forceMotDePasse;
