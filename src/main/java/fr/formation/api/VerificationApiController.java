@@ -1,13 +1,15 @@
 package fr.formation.api;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.HashSet;
-import java.util.Set;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.clickhouse.client.internal.grpc.internal.SharedResourceHolder.Resource;
 
 import fr.formation.repository.VerificationRepository;
 import fr.formation.service.HashingService;
@@ -43,7 +43,7 @@ public class VerificationApiController {
 
 
 	// Génération d'un mot de passe fort
-		@GetMapping("/generateMotDePasseFort")
+	@PostMapping("/generateMotDePasseFort")
 		public String generateMotDePasseFort() {
 			log.info("Génération d'un mot de passe fort.");
 			String motDePasseFort = generateStrongPassword();
@@ -73,11 +73,13 @@ public class VerificationApiController {
 	private boolean isForceMotDePasse(String motDePasse) {
 		// Exemple de vérification de la force du mot de passe
 		return motDePasse.length() > 8 && motDePasse.matches(".*\\d.*") && motDePasse.matches(".*[a-z].*") && motDePasse.matches(".*[A-Z].*");
+		
+		
 	}
 
 	//Vérification mot de passe compromis
 	@PostMapping("/mot-de-passe/compromis")
-	private boolean  getMotDePasseCompromis(@Valid @RequestBody String motDePasse) {
+	private boolean  getMotDePasseCompromis(@Valid @RequestBody String motDePasse) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
 
 		log.info("Exécution de la méthode getMotDePasseCompromis pour le mot de passe: {}", motDePasse);
 
@@ -91,16 +93,16 @@ public class VerificationApiController {
 
 
 	// Méthode pour vérifier si un mot de passe est compromis
-	private boolean isPasswordCompromis(String motDePasse) {
+	private boolean isPasswordCompromis(String motDePasse) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
 		// Exemple de vérification contre une liste de mots de passe compromis
 		// le mot de passe claire doit etre convertir en SHA-1 pour être comparé aux fichiers
 		// Ici, il faudrait comparer avec les mots de passe hachés en SHA-1 stockés dans les fichiers TXT
 		//return false; // À implémenter
 
-		String hashedPassword = hashingService.hashWithSHA1(motDePasse);
-        log.info("Mot de passe haché en SHA-1 : {}", hashedPassword);
+		//String hashedPassword = hashingService.hashWithSHA1(motDePasse);
+        //log.info("Mot de passe haché en SHA-1 : {}", hashedPassword);
 
-        Resource resource = new ClassPathResource("path/to/*.txt");
+        /*Resource resource = new ClassPathResource("path/to/*.txt");
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
             String line;
 
@@ -111,7 +113,7 @@ public class VerificationApiController {
                     return true;
                 }
             }
-        }
+        }*/
         return false;
 		
 	}
