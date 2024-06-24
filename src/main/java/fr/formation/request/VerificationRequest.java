@@ -4,7 +4,7 @@ public class VerificationRequest {
 
 	private String email;
 	private String motDePasse;
-	private int forceMotDePasse;
+	private boolean forceMotDePasse;
 	private boolean motDePasseCompromis;
 	
 
@@ -32,11 +32,11 @@ public class VerificationRequest {
 		this.motDePasse = motDePasse;
 	}
 
-	public int getForceMotDePasse() {
+	public boolean getForceMotDePasse() {
 		return forceMotDePasse;
 	}
 
-	public void setForceMotDePasse(int forceMotDePasse) {
+	public void setForceMotDePasse(boolean forceMotDePasse) {
 		this.forceMotDePasse = forceMotDePasse;
 	}
 	
