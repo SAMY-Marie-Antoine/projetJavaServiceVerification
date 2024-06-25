@@ -61,40 +61,24 @@ public class VerificationApiController {
 	@PostMapping("/generateMotDePasseFort")
 		public String generateMotDePasseFort() {
 
-			// Longueur minimale et maximale du mot de passe
-    int minLength = 16;
-    int maxLength = 128;
-    int passwordLength = 20;  // Longueur par défaut
+			log.info("Début de la génération du mot de passe.");
+			int passwordLength = 60; // Longueur du mot de passe
+			StringBuilder password = new StringBuilder(passwordLength);
 
-    // Ajustement de la longueur si elle est en dehors des limites définies
-    passwordLength = Math.max(passwordLength, minLength);
-    passwordLength = Math.min(passwordLength, maxLength);
+			// Ajouter au moins un caractère de chaque type
+			password.append(CHAR_LOWER.charAt(random.nextInt(CHAR_LOWER.length())));
+			password.append(CHAR_UPPER.charAt(random.nextInt(CHAR_UPPER.length())));
+			password.append(NUMBER.charAt(random.nextInt(NUMBER.length())));
+			password.append(OTHER_CHAR.charAt(random.nextInt(OTHER_CHAR.length())));
 
-    log.info("Début de la génération du mot de passe fort.");
+			// Compléter le reste du mot de passe avec des caractères aléatoires
+			for (int i = 4; i < passwordLength; i++) {
+				password.append(PASSWORD_ALLOW_BASE.charAt(random.nextInt(PASSWORD_ALLOW_BASE.length())));
+			}
 
-    // Assurer que le mot de passe contient au moins une lettre minuscule, une lettre majuscule, un chiffre et un caractère spécial
-    StringBuilder sb = new StringBuilder(passwordLength);
-    sb.append(CHAR_LOWER.charAt(random.nextInt(CHAR_LOWER.length())));
-    sb.append(CHAR_UPPER.charAt(random.nextInt(CHAR_UPPER.length())));
-    sb.append(NUMBER.charAt(random.nextInt(NUMBER.length())));
-    sb.append(OTHER_CHAR.charAt(random.nextInt(OTHER_CHAR.length())));
-
-    // Chars disponibles pour le reste du mot de passe
-    String passwordChars = CHAR_LOWER + CHAR_UPPER + NUMBER + OTHER_CHAR;
-    for (int i = 4; i < passwordLength; i++) {
-        // Générer un caractère aléatoire parmi les caractères disponibles
-        int rndCharAt = random.nextInt(passwordChars.length());
-        char rndChar = passwordChars.charAt(rndCharAt);
-        sb.append(rndChar);
-    }
-
-    // Mélanger les caractères pour éviter que les 4 premiers caractères soient toujours dans le même ordre
-    List<Character> passwordCharsList = sb.chars().mapToObj(c -> (char) c).collect(Collectors.toList());
-    Collections.shuffle(passwordCharsList);
-    String password = passwordCharsList.stream().map(String::valueOf).collect(Collectors.joining());
-
-    log.info("Mot de passe généré : {}", password);
-    return password;	
+			log.info("Mot de passe généré.");
+			return password.toString();
+			
 	}
 
 	//Vérification de la force d'un mot de passe
@@ -111,7 +95,6 @@ public class VerificationApiController {
 	// Méthode pour vérifier si un mot de passe est fort
 	private boolean isForceMotDePasse(String motDePasse) {
 		//return motDePasse.matches("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");
-		//motDePasse.matches("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");
 		// Exemple de vérification de la force du mot de passe
 		//boolean motdepasse= motDePasse.matches("^(?!.*\\\\s)(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#&()–[{}]:;',?/*~$^+=<>]).{8,20}$");
 
@@ -123,11 +106,12 @@ public class VerificationApiController {
 		RegexValidator hasDigit = new RegexValidator(".*\\d.*");
 		RegexValidator hasSpecialChar = new RegexValidator(".*[!@#&()–[{}]:;',?/*~$^+=<>].*");
 		RegexValidator hasNoSpace = new RegexValidator("^(?!.*\\\\s).*");
-		RegexValidator length = new RegexValidator(".{8,20}"); 
+		RegexValidator length = new RegexValidator(".{8,}"); 
 
 		// Vérification de la force du mot de passe
 		return hasUppercase.isValid(motDePasse) && hasLowercase.isValid(motDePasse) && hasDigit.isValid(motDePasse) && hasSpecialChar.isValid(motDePasse) && hasNoSpace.isValid(motDePasse) && length.isValid(motDePasse);	
-	
+		//return motDePasse.matches("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");
+
 	}
 
 	//Vérification mot de passe compromis
