@@ -7,11 +7,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.security.SecureRandom;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import org.apache.commons.validator.routines.RegexValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -31,6 +33,13 @@ import jakarta.validation.Valid;
 public class VerificationApiController {
 
 	private static final Logger log = LoggerFactory.getLogger(VerificationApiController.class);
+
+	private static final String CHAR_LOWER = "abcdefghijklmnopqrstuvwxyz";
+	private static final String CHAR_UPPER = CHAR_LOWER.toUpperCase();
+	private static final String NUMBER = "0123456789";
+	private static final String OTHER_CHAR = "!@#&()–[{}]:;',?/*~$^+=<>";
+	private static final String PASSWORD_ALLOW_BASE = CHAR_LOWER + CHAR_UPPER + NUMBER + OTHER_CHAR;
+	private static SecureRandom random = new SecureRandom();
 
 	//@Autowired
 	private final VerificationRepository verificationRepository;
@@ -53,12 +62,27 @@ public class VerificationApiController {
 		log.info("Mot de passe fort généré : {}", motDePasseFort);
 		return motDePasseFort;
 	}
+		public String generateMotDePasseFort() {
 
 	// Méthode pour générer un mot de passe fort
 	private String generateStrongPassword() {
 		// Exemple de génération de mot de passe fort
 		return new BCryptPasswordEncoder().encode("StrongP@ssw0rd!");
 	}
+			log.info("Début de la génération du mot de passe fort.");
+    		StringBuilder sb = new StringBuilder(20);
+			for (int i = 0; i < 20; i++) {
+				int rndCharAt = random.nextInt(PASSWORD_ALLOW_BASE.length());
+				char rndChar = PASSWORD_ALLOW_BASE.charAt(rndCharAt);
+
+				sb.append(rndChar);
+			}
+
+			String password = sb.toString();
+			log.info("Mot de passe généré : {}", password);
+			return password;	
+	}
+		
 
 
 	//Vérification de la force d'un mot de passe
@@ -75,6 +99,22 @@ public class VerificationApiController {
 	// Méthode pour vérifier si un mot de passe est fort
 	private boolean isForceMotDePasse(String motDePasse) {
 		return motDePasse.matches("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");
+		// Exemple de vérification de la force du mot de passe
+		boolean motdepasse= motDePasse.matches("^(?!.*\\\\s)(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#&()–[{}]:;',?/*~$^+=<>]).{8,20}$");
+
+		return motdepasse; 
+
+		// Création des validateurs de regex
+		/* RegexValidator hasUppercase = new RegexValidator(".*[A-Z].*");
+		RegexValidator hasLowercase = new RegexValidator(".*[a-z].*");
+		RegexValidator hasDigit = new RegexValidator(".*\\d.*");
+		RegexValidator hasSpecialChar = new RegexValidator(".*[!@#&()–[{}]:;',?/*~$^+=<>].*");
+		RegexValidator hasNoSpace = new RegexValidator("^(?!.*\\\\s).*");
+		RegexValidator length = new RegexValidator(".{8,20}"); */
+
+		// Vérification de la force du mot de passe
+		// return hasUppercase.isValid(motDePasse) && hasLowercase.isValid(motDePasse) && hasDigit.isValid(motDePasse) && hasSpecialChar.isValid(motDePasse) && hasNoSpace.isValid(motDePasse) && length.isValid(motDePasse);	
+	
 	}
 
 	//Vérification mot de passe compromis

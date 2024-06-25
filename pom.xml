@@ -87,6 +87,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
+
+		<!-- pour créer des validateurs de regex pour chaque règle de validation-->
+		<dependency>
+			<groupId>commons-validator</groupId>
+			<artifactId>commons-validator</artifactId>
+        <version>1.7</version>
+    </dependency>
 		
 	</dependencies>
 
