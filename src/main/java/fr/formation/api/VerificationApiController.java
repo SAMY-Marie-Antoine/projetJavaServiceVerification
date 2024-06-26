@@ -3,6 +3,7 @@ package fr.formation.api;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -19,13 +20,15 @@ import javax.crypto.NoSuchPaddingException;
 import org.apache.commons.validator.routines.RegexValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import fr.formation.command.CreateVerificationCommand;
 import fr.formation.repository.VerificationRepository;
 import fr.formation.service.HashingService;
 import jakarta.validation.Valid;
@@ -43,13 +46,17 @@ public class VerificationApiController {
 	private static final String OTHER_CHAR = "!@#&()–[{}]:;',?/*~$^+=<>";
 	private static final String PASSWORD_ALLOW_BASE = CHAR_LOWER + CHAR_UPPER + NUMBER + OTHER_CHAR;
 	private static SecureRandom random = new SecureRandom();
-
+	
 	//@Autowired
 	private final VerificationRepository verificationRepository;
 
 	private final HashingService hashingService;
+	
+	CreateVerificationCommand command = new CreateVerificationCommand();
 
-
+	@Autowired
+	private StreamBridge streamBridge;
+	
 	public VerificationApiController(VerificationRepository verificationRepository, HashingService hashingService) {
 		this.verificationRepository = verificationRepository;
 		this.hashingService = hashingService;
@@ -59,27 +66,28 @@ public class VerificationApiController {
 
 	// Génération d'un mot de passe fort
 	@PostMapping("/generateMotDePasseFort")
-		public String generateMotDePasseFort() {
+	public String generateMotDePasseFort() {
+		log.info("Début de la génération du mot de passe fort.");
+		StringBuilder sb = new StringBuilder(20);
+		for (int i = 0; i < 20; i++) {
+			int rndCharAt = random.nextInt(PASSWORD_ALLOW_BASE.length());
+			char rndChar = PASSWORD_ALLOW_BASE.charAt(rndCharAt);
 
-			log.info("Début de la génération du mot de passe.");
-			int passwordLength = 60; // Longueur du mot de passe
-			StringBuilder password = new StringBuilder(passwordLength);
+			sb.append(rndChar);
+		}
 
-			// Ajouter au moins un caractère de chaque type
-			password.append(CHAR_LOWER.charAt(random.nextInt(CHAR_LOWER.length())));
-			password.append(CHAR_UPPER.charAt(random.nextInt(CHAR_UPPER.length())));
-			password.append(NUMBER.charAt(random.nextInt(NUMBER.length())));
-			password.append(OTHER_CHAR.charAt(random.nextInt(OTHER_CHAR.length())));
+		String password = sb.toString();
+		//log.info("Mot de passe généré : {}", password);
+		
+				command.setMessage("Mot de passe généré: ->");
+				command.setPassword(password);
 
-			// Compléter le reste du mot de passe avec des caractères aléatoires
-			for (int i = 4; i < passwordLength; i++) {
-				password.append(PASSWORD_ALLOW_BASE.charAt(random.nextInt(PASSWORD_ALLOW_BASE.length())));
-			}
-
-			log.info("Mot de passe généré.");
-			return password.toString();
-			
+				log.debug("Mot de passe généré : {}", password, (this.streamBridge.send("verification.validated",command)));
+		
+		return password;
 	}
+
+	
 
 	//Vérification de la force d'un mot de passe
 	@PostMapping("/mot-de-passe/force")
@@ -88,6 +96,15 @@ public class VerificationApiController {
 		log.info("Vérification de la force du mot de passe.");
 		boolean isStrong = isForceMotDePasse(motDePasse);
 		log.info("Résultat de la vérification de la force du mot de passe : {}", isStrong);
+		
+		command.setMessage("Vérification de la force du mot de passe: ->");
+		command.setVerificationPassword(isStrong);
+		
+		if(isStrong) {
+			log.debug("Vérification de la force du mot de passe : {}",isStrong, this.streamBridge.send("verification.validated",command));
+		}else {
+			log.debug("Vérification de la force du mot de passe. : {}",isStrong, this.streamBridge.send("verification.rejected",command));
+		}
 		return isStrong;
 	}
 
@@ -123,6 +140,15 @@ public class VerificationApiController {
 		log.info("Vérification si le mot de passe est compromis.");
 		boolean isCompromis = isPasswordCompromis(motDePasse);
 		log.info("Résultat de la vérification du mot de passe compromis : {}", isCompromis);
+		
+		command.setMessage("Vérification si le mot de passe est compromis: ->");
+		command.setVerificationPassword(isCompromis);
+		
+		if(isCompromis) {
+			log.debug("Vérification si le mot de passe est compromis : {}",isCompromis, this.streamBridge.send("verification.rejected",command));
+		}else {
+			log.debug("Vérification si le mot de passe est compromis : {}",isCompromis, this.streamBridge.send("verification.validated",command));
+		}
 
 		return isCompromis;
 	}
