@@ -8,10 +8,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.security.SecureRandom;
+import java.time.LocalDateTime;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -81,6 +78,7 @@ public class VerificationApiController {
 		
 				command.setMessage("Mot de passe généré: ->");
 				command.setPassword(password);
+				command.setTimestamp(LocalDateTime.now());
 
 				log.debug("Mot de passe généré : {}", password, (this.streamBridge.send("verification.validated",command)));
 		
@@ -99,6 +97,7 @@ public class VerificationApiController {
 		
 		command.setMessage("Vérification de la force du mot de passe: ->");
 		command.setVerificationPassword(isStrong);
+		command.setTimestamp(LocalDateTime.now());
 		
 		if(isStrong) {
 			log.debug("Vérification de la force du mot de passe : {}",isStrong, this.streamBridge.send("verification.validated",command));
