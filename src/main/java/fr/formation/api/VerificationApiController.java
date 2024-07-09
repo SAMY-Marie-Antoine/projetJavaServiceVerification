@@ -65,24 +65,36 @@ public class VerificationApiController {
 	@PostMapping("/generateMotDePasseFort")
 	public String generateMotDePasseFort() {
 		log.info("Début de la génération du mot de passe fort.");
-		StringBuilder sb = new StringBuilder(20);
-		for (int i = 0; i < 20; i++) {
-			int rndCharAt = random.nextInt(PASSWORD_ALLOW_BASE.length());
-			char rndChar = PASSWORD_ALLOW_BASE.charAt(rndCharAt);
+		
+		int passwordLength = 20; // Longueur du mot de passe
+		StringBuilder password = new StringBuilder(passwordLength);
 
-			sb.append(rndChar);
+		// Ajouter au moins un caractère de chaque type
+		password.append(CHAR_LOWER.charAt(random.nextInt(CHAR_LOWER.length())));
+		password.append(CHAR_UPPER.charAt(random.nextInt(CHAR_UPPER.length())));
+		password.append(NUMBER.charAt(random.nextInt(NUMBER.length())));
+		password.append(OTHER_CHAR.charAt(random.nextInt(OTHER_CHAR.length())));
+
+		// Compléter le reste du mot de passe avec des caractères aléatoires
+		for (int i = 4; i < passwordLength; i++) {
+			String charSet = PASSWORD_ALLOW_BASE;
+			// Assurer qu'au moins un chiffre est inclus dans le mot de passe
+			if (!password.toString().matches(".*\\d.*")) {
+				charSet = NUMBER;
+			}
+			password.append(charSet.charAt(random.nextInt(charSet.length())));
 		}
+	
 
-		String password = sb.toString();
-		//log.info("Mot de passe généré : {}", password);
-		
-				command.setMessage("Mot de passe généré: ->");
-				command.setPassword(password);
-				command.setTimestamp(LocalDateTime.now());
+		log.info("Mot de passe généré : {}", password);
+		// Préparation du message
+		command.setMessage("Mot de passe généré: ->");
+		command.setPassword(password.toString());
+		command.setTimestamp(LocalDateTime.now());
 
-				log.debug("Mot de passe généré : {}", password, (this.streamBridge.send("verification.validated",command)));
+		log.debug("Mot de passe généré : {}", password, (this.streamBridge.send("verification.validated",command)));
 		
-		return password;
+		return password.toString();
 	}
 
 	
@@ -110,11 +122,6 @@ public class VerificationApiController {
 
 	// Méthode pour vérifier si un mot de passe est fort
 	private boolean isForceMotDePasse(String motDePasse) {
-		//return motDePasse.matches("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");
-		// Exemple de vérification de la force du mot de passe
-		//boolean motdepasse= motDePasse.matches("^(?!.*\\\\s)(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#&()–[{}]:;',?/*~$^+=<>]).{8,20}$");
-
-		//return motdepasse; 
 
 		// Création des validateurs de regex
 		RegexValidator hasUppercase = new RegexValidator(".*[A-Z].*");
@@ -126,8 +133,7 @@ public class VerificationApiController {
 
 		// Vérification de la force du mot de passe
 		return hasUppercase.isValid(motDePasse) && hasLowercase.isValid(motDePasse) && hasDigit.isValid(motDePasse) && hasSpecialChar.isValid(motDePasse) && hasNoSpace.isValid(motDePasse) && length.isValid(motDePasse);	
-		//return motDePasse.matches("^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$");
-
+ 
 	}
 
 	//Vérification mot de passe compromis
@@ -158,7 +164,7 @@ public class VerificationApiController {
 		// Exemple de vérification contre une liste de mots de passe compromis
 		// le mot de passe claire doit etre convertir en SHA-1 pour être comparé aux fichiers
 		// Ici, il faudrait comparer avec les mots de passe hachés en SHA-1 stockés dans les fichiers TXT
-		//return false; // À implémenter
+		
 		String hashedPassword = hashingService.hashWithSHA1(motDePasse);
 		log.info("Mot de passe haché en SHA-1 : {}", hashedPassword);
 
@@ -166,18 +172,18 @@ public class VerificationApiController {
 
 				"default", "")) {
 			connection.setAutoCommit(false);
-
 			try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM contenu WHERE mot LIKE ?")){
 
 				statement.setString(1,hashedPassword+"%");
+				log.info("Récupération des données de la base de données ...");
 				ResultSet rs = statement.executeQuery();
 				while(rs.next()){
 
 					System.out.println("mot = " +rs.getString("mot"));
 					if(hashedPassword.equals(rs.getString("mot")))
 					{
+						log.info("Le mot de passe est compromis.");
 						return true;
-
 					}
 					else {
 						return false;
@@ -193,5 +199,4 @@ public class VerificationApiController {
 		}	
 		return false;
 	}
-
 }
