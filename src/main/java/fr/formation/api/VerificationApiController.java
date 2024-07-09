@@ -142,6 +142,7 @@ public class VerificationApiController {
 		
 		command.setMessage("Vérification si le mot de passe est compromis: ->");
 		command.setVerificationPassword(isCompromis);
+		command.setTimestamp(LocalDateTime.now());
 		
 		if(isCompromis) {
 			log.debug("Vérification si le mot de passe est compromis : {}",isCompromis, this.streamBridge.send("verification.rejected",command));
