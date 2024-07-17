@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.formation.command.CreateVerificationCommand;
-import fr.formation.repository.VerificationRepository;
 import fr.formation.service.HashingService;
 import jakarta.validation.Valid;
 
@@ -44,9 +43,7 @@ public class VerificationApiController {
 	private static final String PASSWORD_ALLOW_BASE = CHAR_LOWER + CHAR_UPPER + NUMBER + OTHER_CHAR;
 	private static SecureRandom random = new SecureRandom();
 	
-	//@Autowired
-	private final VerificationRepository verificationRepository;
-
+	
 	private final HashingService hashingService;
 	
 	CreateVerificationCommand command = new CreateVerificationCommand();
@@ -54,8 +51,8 @@ public class VerificationApiController {
 	@Autowired
 	private StreamBridge streamBridge;
 	
-	public VerificationApiController(VerificationRepository verificationRepository, HashingService hashingService) {
-		this.verificationRepository = verificationRepository;
+	public VerificationApiController(HashingService hashingService) {
+		
 		this.hashingService = hashingService;
 		log.info("Initialisation de VerificationApiController");
 	}
@@ -63,42 +60,53 @@ public class VerificationApiController {
 
 	// Génération d'un mot de passe fort
 	@PostMapping("/generateMotDePasseFort")
-	public String generateMotDePasseFort() {
-		log.info("Début de la génération du mot de passe fort.");
+	public String generateMotDePasseFort() throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, BadPaddingException, IllegalBlockSizeException {
 		
-		int passwordLength = 20; // Longueur du mot de passe
-		StringBuilder password = new StringBuilder(passwordLength);
+		log.info("Début de la génération du mot de passe fort.");
+		String passwordStr;
+    	boolean isCompromis;
 
-		// Ajouter au moins un caractère de chaque type
-		password.append(CHAR_LOWER.charAt(random.nextInt(CHAR_LOWER.length())));
-		password.append(CHAR_UPPER.charAt(random.nextInt(CHAR_UPPER.length())));
-		password.append(NUMBER.charAt(random.nextInt(NUMBER.length())));
-		password.append(OTHER_CHAR.charAt(random.nextInt(OTHER_CHAR.length())));
+		do {
+			int passwordLength = 20; // Longueur du mot de passe
+			StringBuilder password = new StringBuilder(passwordLength);
 
-		// Compléter le reste du mot de passe avec des caractères aléatoires
-		for (int i = 4; i < passwordLength; i++) {
-			String charSet = PASSWORD_ALLOW_BASE;
-			// Assurer qu'au moins un chiffre est inclus dans le mot de passe
-			if (!password.toString().matches(".*\\d.*")) {
-				charSet = NUMBER;
+			// Ajouter au moins un caractère de chaque type
+			password.append(CHAR_LOWER.charAt(random.nextInt(CHAR_LOWER.length())));
+			password.append(CHAR_UPPER.charAt(random.nextInt(CHAR_UPPER.length())));
+			password.append(NUMBER.charAt(random.nextInt(NUMBER.length())));
+			password.append(OTHER_CHAR.charAt(random.nextInt(OTHER_CHAR.length())));
+
+			// Compléter le reste du mot de passe avec des caractères aléatoires
+			for (int i = 4; i < passwordLength; i++) {
+				String charSet = PASSWORD_ALLOW_BASE;
+				// Assurer qu'au moins un chiffre est inclus dans le mot de passe
+				if (!password.toString().matches(".*\\d.*")) {
+					charSet = NUMBER;
+				}
+				password.append(charSet.charAt(random.nextInt(charSet.length())));
 			}
-			password.append(charSet.charAt(random.nextInt(charSet.length())));
-		}
-	
+		
+			passwordStr = password.toString();
+			log.info("Mot de passe généré : {}", password);
 
-		log.info("Mot de passe généré : {}", password);
+			// Vérifier si le mot de passe est compromis
+			isCompromis = isPasswordCompromis(passwordStr);
+			if (isCompromis) {
+				log.info("Le mot de passe généré est compromis. Génération d'un nouveau mot de passe.");
+			}
+    	} while (isCompromis); // Continuer à générer un nouveau mot de passe jusqu'à ce qu'il ne soit pas compromis
+
 		// Préparation du message
 		command.setMessage("Mot de passe généré: ->");
-		command.setPassword(password.toString());
+		command.setPassword(passwordStr.toString());
 		command.setTimestamp(LocalDateTime.now());
 
-		log.debug("Mot de passe généré : {}", password, (this.streamBridge.send("verification.validated",command)));
+		log.debug("Mot de passe généré : {}", passwordStr, (this.streamBridge.send("verification.validated",command)));
 		
-		return password.toString();
+		return passwordStr;
 	}
 
 	
-
 	//Vérification de la force d'un mot de passe
 	@PostMapping("/mot-de-passe/force")
 	private boolean getForceMotDePasse(@Valid @RequestBody String motDePasse) {

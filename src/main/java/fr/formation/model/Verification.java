@@ -33,7 +33,6 @@ public class Verification {
 	private VerificationEtat etat;
 	
 	private String utilisateurId;
-	
 
 	public String getId() {
 		return id;
@@ -43,12 +42,12 @@ public class Verification {
 		this.id = id;
 	}
 
-	public String getEmailVerif() {
+	public String getEmail() {
 		return email;
 	}
 
-	public void setEmailVerif(String emailVerif) {
-		this.email = emailVerif;
+	public void setEmail(String email) {
+		this.email = email;
 	}
 
 	public String getMotDePasse() {
@@ -57,22 +56,6 @@ public class Verification {
 
 	public void setMotDePasse(String motDePasse) {
 		this.motDePasse = motDePasse;
-	}
-
-	public VerificationEtat getEtat() {
-		return etat;
-	}
-
-	public void setEtat(VerificationEtat etat) {
-		this.etat = etat;
-	}
-
-	public String getUtilisateurId() {
-		return utilisateurId;
-	}
-
-	public void setUtilisateurId(String utilisateurId) {
-		this.utilisateurId = utilisateurId;
 	}
 
 	public boolean isForceMotDePasse() {
@@ -90,5 +73,24 @@ public class Verification {
 	public void setMotDePasseCompromis(boolean motDePasseCompromis) {
 		this.motDePasseCompromis = motDePasseCompromis;
 	}
+
+	public VerificationEtat getEtat() {
+		return etat;
+	}
+
+	public void setEtat(VerificationEtat etat) {
+		this.etat = etat;
+	}
+
+	public String getUtilisateurId() {
+		return utilisateurId;
+	}
+
+	public void setUtilisateurId(String utilisateurId) {
+		this.utilisateurId = utilisateurId;
+	}
+	
+
+	
 	
 }
